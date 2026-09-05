@@ -3,6 +3,7 @@ import type { Contribution, Pool } from '../lib/ortaq'
 import { formatAmount } from '../lib/format'
 import { readWallet, shortAddress, type WalletState } from '../lib/wallet'
 import { PoolCard } from '../components/PoolCard'
+import { initials } from '../components/Avatar'
 import { BellIcon, PlusIcon } from '../components/Icons'
 import { Screen, TopGlow } from '../components/ui'
 
@@ -16,6 +17,7 @@ const TABS: { id: Tab; label: string }[] = [
 /** Главный экран: кошелёк, баланс и список сборов. */
 export function PoolList({
   address,
+  me,
   balance,
   pools,
   people,
@@ -23,8 +25,10 @@ export function PoolList({
   onOpen,
   onCreate,
   onNotifications,
+  onRename,
 }: {
   address: string
+  me: string
   balance: number | null
   pools: Pool[]
   people: Record<string, Contribution[]>
@@ -32,6 +36,7 @@ export function PoolList({
   onOpen: (poolAddress: string) => void
   onCreate: () => void
   onNotifications: () => void
+  onRename: () => void
 }) {
   const [wallet, setWallet] = useState<WalletState | null>(null)
   const [tab, setTab] = useState<Tab>('all')
@@ -65,9 +70,13 @@ export function PoolList({
                 </span>
               )}
             </button>
-            <div className="grad-brand flex h-11 w-11 items-center justify-center rounded-2xl text-[14px] font-bold">
-              {shortAddress(address)[0].toUpperCase()}
-            </div>
+            {/* Аватар — единственный вход в смену имени: отдельного экрана настроек нет. */}
+            <button
+              onClick={onRename}
+              className="grad-brand flex h-11 w-11 items-center justify-center rounded-2xl text-[14px] font-bold"
+            >
+              {initials(me)}
+            </button>
           </div>
         </header>
 

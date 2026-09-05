@@ -22,6 +22,13 @@ interface Row {
 const db = new Map<string, Row>()
 
 /**
+ * Кто вносит с этого устройства. В цепочке участника определяет адрес
+ * подписанта, здесь — эта константа. Имя к личности отношения не имеет:
+ * сменил имя — остался тем же участником, а не появился второй.
+ */
+const ME = 'me'
+
+/**
  * Баланс демо-кошелька в лампортах. Живёт рядом со сборами намеренно:
  * взнос обязан уменьшать его в тот же момент, иначе на экране два
  * несвязанных мира. В цепочке это будет настоящий баланс SOL.
@@ -201,18 +208,13 @@ export const mockClient: OrtaqClient = {
     const row = read(address)
     if (row.pool.status !== 'open') throw new OrtaqError('PoolClosed', 'Сбор уже закрыт')
     if (row.pool.deadline <= now()) throw new OrtaqError('DeadlinePassed', 'Срок истёк')
-    const existing = row.contributions.find((c) => c.name === name)
+    const existing = row.contributions.find((c) => c.contributor === ME)
     if (existing) {
       existing.amount += amount
       existing.at = now()
+      existing.name = name // имя могли поменять между взносами
     } else {
-      row.contributions.push({
-        contributor: 'u' + row.contributions.length,
-        name,
-        amount,
-        refunded: false,
-        at: now(),
-      })
+      row.contributions.push({ contributor: ME, name, amount, refunded: false, at: now() })
     }
     row.pool.collected += amount
     // Комиссия уходит сети и не возвращается при срыве сбора — поэтому

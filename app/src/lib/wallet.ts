@@ -9,43 +9,36 @@
  * Когда подключится chain.ts, подпись транзакций возьмёт провайдера через
  * getPhantom() — других мест, где приложение знает про кошелёк, быть не должно.
  */
-const KEY = 'ortaq.identity'
+const NAME_KEY = 'ortaq.name'
 
-export interface Identity {
-  /** адрес Phantom, либо локальный uuid, если кошелька нет */
-  id: string
-  name: string
-  /** есть только когда подключён кошелёк */
-  address?: string
-}
-
-export function getIdentity(): Identity | null {
+/**
+ * Имя участника. Адрес говорит, кто внёс, но список участников должен
+ * читаться с трёх метров — поэтому имя спрашиваем один раз после
+ * подключения кошелька и дальше отправляем вместе со взносом.
+ *
+ * Хранится локально только как черновик: настоящее место имени — взнос
+ * в цепочке, иначе на других телефонах его никто не увидит.
+ */
+export function getName(): string {
   try {
-    const raw = localStorage.getItem(KEY)
-    return raw ? (JSON.parse(raw) as Identity) : null
+    return localStorage.getItem(NAME_KEY)?.trim() ?? ''
   } catch {
-    return null
+    return ''
   }
 }
 
-function save(identity: Identity): Identity {
+export function setName(name: string): string {
+  const clean = name.trim().slice(0, MAX_NAME)
   try {
-    localStorage.setItem(KEY, JSON.stringify(identity))
+    localStorage.setItem(NAME_KEY, clean)
   } catch {
-    /* приватный режим — переживём, личность будет жить до перезагрузки */
+    /* приватный режим — имя переживёт только эту сессию */
   }
-  return identity
+  return clean
 }
 
-/** Личность без кошелька: «Продолжить» на первом экране. */
-export function setIdentity(name: string): Identity {
-  return save({ id: crypto.randomUUID(), name: name.trim() })
-}
-
-/** Личность с кошельком: адрес становится идентификатором. */
-export function setWalletIdentity(name: string, address: string): Identity {
-  return save({ id: address, name: name.trim(), address })
-}
+/** Столько же байт отводится под имя во взносе — держим предел одинаковым. */
+export const MAX_NAME = 24
 
 export function shortAddress(address: string): string {
   return address.slice(0, 4) + '…' + address.slice(-4)

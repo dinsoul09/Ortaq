@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ortaq, type Contribution, type Pool } from './lib/ortaq'
-import { shortAddress } from './lib/wallet'
+import { getName, setName } from './lib/wallet'
 import { WithPool } from './components/WithPool'
 import { Connect } from './screens/Connect'
+import { Name } from './screens/Name'
 import { PoolList } from './screens/PoolList'
 import { PoolView } from './screens/PoolView'
 import { Contribute } from './screens/Contribute'
@@ -19,6 +20,7 @@ type View =
   | { name: 'contribute'; address: string }
   | { name: 'sent'; address: string }
   | { name: 'notifications' }
+  | { name: 'rename' }
 
 /**
  * Роутинга нет намеренно. Адрес сбора берётся из ?pool= — так три телефона
@@ -28,6 +30,7 @@ type View =
  */
 export default function App() {
   const [wallet, setWallet] = useState<string | null>(null)
+  const [me, setMe] = useState<string>(getName)
   const [view, setView] = useState<View>(() => {
     const deep = new URLSearchParams(location.search).get('pool')
     return deep ? { name: 'pool', address: deep } : { name: 'list' }
@@ -75,9 +78,22 @@ export default function App() {
 
   if (!wallet) return <Connect onConnected={setWallet} />
 
-  const me = shortAddress(wallet)
+  // Имя спрашиваем один раз: без него взнос в списке участников безымянный.
+  if (!me) return <Name onSave={(n) => setMe(setName(n))} />
 
   switch (view.name) {
+    case 'rename':
+      return (
+        <Name
+          initial={me}
+          onBack={goHome}
+          onSave={(n) => {
+            setMe(setName(n))
+            goHome()
+          }}
+        />
+      )
+
     case 'create':
       return <CreatePool onBack={goHome} onCreated={openPool} />
 
@@ -122,6 +138,7 @@ export default function App() {
       return (
         <PoolList
           address={wallet}
+          me={me}
           balance={balance}
           pools={pools}
           people={people}
@@ -129,6 +146,7 @@ export default function App() {
           onOpen={openPool}
           onCreate={() => setView({ name: 'create' })}
           onNotifications={() => setView({ name: 'notifications' })}
+          onRename={() => setView({ name: 'rename' })}
         />
       )
   }
