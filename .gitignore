@@ -1,0 +1,8 @@
+node_modules
+dist
+.env.local
+.env
+keys/
+*.keypair.json
+.DS_Store
+.trash-*
