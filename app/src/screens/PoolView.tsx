@@ -64,6 +64,23 @@ export function PoolView({
     }
   }
 
+  /**
+   * Возврат. В программе его подписывает сам участник — само по себе
+   * ничего не вернётся. Кнопка видна всем, у кого сбор сорвался: если
+   * взноса не было, программа ответит отказом, и это честнее, чем прятать.
+   */
+  async function claimRefund() {
+    setBusy(true)
+    try {
+      await ortaq.refund(address)
+      await load()
+    } catch (e) {
+      setNotice(e instanceof OrtaqError ? e.code : 'Unknown')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function copyLink() {
     const link = poolLink(address, pool && {
       title: pool.title,
@@ -89,6 +106,10 @@ export function PoolView({
 
   const open = pool.status === 'open'
   const left = Math.max(0, pool.goal - pool.collected)
+  // Статус в программе остаётся активным, пока последний участник не забрал
+  // своё, поэтому «сорвался» считаем сами: срок вышел и цель не закрыта.
+  const expired = pool.deadline * 1000 <= Date.now()
+  const refundable = expired && pool.collected < pool.goal && pool.status !== 'released'
 
   return (
     <>
@@ -205,6 +226,12 @@ export function PoolView({
           <GhostButton disabled={busy} onClick={release}>
             Забрать деньги
           </GhostButton>
+
+          {refundable && (
+            <GhostButton disabled={busy} onClick={claimRefund}>
+              Забрать свой взнос
+            </GhostButton>
+          )}
 
         </div>
 
