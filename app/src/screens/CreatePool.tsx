@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ortaq, usingMock, type PoolIcon } from '../lib/ortaq'
-import { toUnits } from '../lib/format'
+import { toUnits, TOKEN_SYMBOL } from '../lib/format'
 import { POOL_ICON_KEYS, PoolGlyph, CopyIcon } from '../components/Icons'
 import {
   Back,
@@ -14,7 +14,7 @@ import {
   TopGlow,
 } from '../components/ui'
 
-/** Оставляем цифры и одну точку: суммы в SOL дробные. */
+/** Оставляем цифры и одну точку: суммы дробные. */
 const numeric = (v: string) => v.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1')
 
 /** Значение для input[type=datetime-local] — он не понимает ISO с зоной. */
@@ -44,8 +44,7 @@ export function CreatePool({
   const [description, setDescription] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const goalNumber = Number(goal) || 0
-  const ready = Boolean(title.trim()) && goalNumber > 0 && Boolean(deadline)
+  const ready = Boolean(title.trim()) && toUnits(goal) > 0 && Boolean(deadline)
 
   async function create() {
     setBusy(true)
@@ -55,7 +54,7 @@ export function CreatePool({
         title: title.trim(),
         description: description.trim(),
         icon,
-        goal: toUnits(goalNumber),
+        goal: toUnits(goal),
         durationSec: Math.max(30, seconds),
         recipient: 'Вы',
       })
@@ -108,7 +107,7 @@ export function CreatePool({
         </div>
 
         <div className="mt-4">
-          <Label>Цель сбора (SOL)</Label>
+          <Label>Цель сбора ({TOKEN_SYMBOL})</Label>
           <Field
             value={goal}
             inputMode="decimal"

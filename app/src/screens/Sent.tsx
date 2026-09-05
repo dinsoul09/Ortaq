@@ -1,5 +1,5 @@
 import type { Pool } from '../lib/ortaq'
-import { formatAmount, formatDate, percent } from '../lib/format'
+import { formatAmount, formatDate, percent, TOKEN_SYMBOL } from '../lib/format'
 import { CheckIcon } from '../components/Icons'
 import { Progress } from '../components/Progress'
 import { Card, GhostButton, Screen } from '../components/ui'
@@ -35,9 +35,9 @@ export function Sent({ pool, onHome }: { pool: Pool; onHome: () => void }) {
           />
           <div className="mt-2.5 flex items-baseline justify-between">
             <span className="text-[14px] font-semibold text-violet-soft">
-              {formatAmount(pool.collected)} SOL
+              {formatAmount(pool.collected)} {TOKEN_SYMBOL}
             </span>
-            <span className="text-[12px] text-white/35">/ {formatAmount(pool.goal)} SOL</span>
+            <span className="text-[12px] text-white/35">/ {formatAmount(pool.goal)} {TOKEN_SYMBOL}</span>
           </div>
           <p className="mt-2 text-[12px] text-amber">Срок: {formatDate(pool.deadline)}</p>
         </Card>

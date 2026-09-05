@@ -1,5 +1,5 @@
 import type { Contribution, Pool } from '../lib/ortaq'
-import { formatAmount, formatDate, formatLeft, percent } from '../lib/format'
+import { formatAmount, formatDate, formatLeft, percent, TOKEN_SYMBOL } from '../lib/format'
 import { PoolGlyph } from './Icons'
 import { Progress } from './Progress'
 import { StatusPill } from './StatusPill'
@@ -41,9 +41,9 @@ export function PoolCard({
       <div className="mt-2.5 flex items-center justify-between">
         <p>
           <span className="text-[14px] font-bold text-violet-soft">
-            {formatAmount(pool.collected)} SOL
+            {formatAmount(pool.collected)} {TOKEN_SYMBOL}
           </span>
-          <span className="text-[12px] text-white/30"> / {formatAmount(pool.goal)} SOL</span>
+          <span className="text-[12px] text-white/30"> / {formatAmount(pool.goal)} {TOKEN_SYMBOL}</span>
         </p>
         <AvatarStack names={people.map((p) => p.name)} total={people.length} />
       </div>

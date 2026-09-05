@@ -1,14 +1,17 @@
 import { useState } from 'react'
-import { NETWORK_FEE, ortaq, OrtaqError, type Pool } from '../lib/ortaq'
-import { formatAmount, toUnits } from '../lib/format'
+import { ortaq, OrtaqError, type Pool } from '../lib/ortaq'
+import { formatAmount, toUnits, TOKEN_SYMBOL } from '../lib/format'
 import { PoolGlyph } from '../components/Icons'
 import { Notice, type NoticeCode } from '../components/Notice'
 import { Back, Card, Label, PrimaryButton, Screen, TextButton, TopGlow } from '../components/ui'
 
-/** Быстрые суммы, в SOL. */
-const QUICK = [0.05, 0.1, 0.25, 0.5]
+/** Быстрые суммы, в человеческом виде. */
+const QUICK = ['0.05', '0.1', '0.25', '0.5']
 
-/** Оставляем цифры и одну точку: суммы в SOL дробные. */
+/** Комиссия сети в SOL — показываем как есть, она не в токене сбора. */
+const FEE_SOL = '0.000005'
+
+/** Оставляем цифры и одну точку: суммы дробные. */
 const numeric = (v: string) => v.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1')
 
 export function Contribute({
@@ -28,10 +31,9 @@ export function Contribute({
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<NoticeCode | null>(null)
 
-  const amount = Math.max(0, Number(value) || 0)
-  const units = toUnits(amount)
-  const total = units + NETWORK_FEE
-  const enough = balance === null || total <= balance
+  // Всё в базовых единицах: сумма никогда не проходит через float.
+  const units = toUnits(value)
+  const enough = balance === null || units <= balance
 
   async function send() {
     setBusy(true)
@@ -71,19 +73,19 @@ export function Contribute({
               onChange={(e) => setValue(numeric(e.target.value))}
               className="w-full min-w-0 bg-transparent text-[34px] font-bold tabular-nums outline-none"
             />
-            <span className="pb-1 text-[20px] font-semibold text-violet-soft">SOL</span>
+            <span className="pb-1 text-[20px] font-semibold text-violet-soft">{TOKEN_SYMBOL}</span>
           </div>
           <p className="mt-2 text-[12px] text-white/35">
-            Доступно: {balance === null ? '—' : formatAmount(balance)} SOL
+            Доступно: {balance === null ? '—' : formatAmount(balance)} {TOKEN_SYMBOL}
           </p>
 
           <div className="mt-4 grid grid-cols-4 gap-2">
             {QUICK.map((q) => (
               <button
                 key={q}
-                onClick={() => setValue(String(q))}
+                onClick={() => setValue(q)}
                 className={`rounded-xl py-2 text-[12px] font-semibold ${
-                  amount === q ? 'bg-violet-deep text-white' : 'bg-white/[0.06] text-white/40'
+                  units === toUnits(q) ? 'bg-violet-deep text-white' : 'bg-white/[0.06] text-white/40'
                 }`}
               >
                 {q}
@@ -93,13 +95,17 @@ export function Contribute({
         </Card>
 
         <div className="mt-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4">
+          {/* Две разные валюты: взнос в токене сбора, комиссия в SOL.
+              Складывать их нельзя — поэтому показаны отдельными строками. */}
           <div className="flex items-center justify-between text-[12px] text-white/40">
             <span>Комиссия сети Solana</span>
-            <span className="font-mono">~{formatAmount(NETWORK_FEE)} SOL</span>
+            <span className="font-mono">~{FEE_SOL} SOL</span>
           </div>
           <div className="mt-2 flex items-center justify-between text-[14px] font-semibold">
-            <span>Всего списывается</span>
-            <span>{formatAmount(total)} SOL</span>
+            <span>Списывается со сбора</span>
+            <span>
+              {formatAmount(units)} {TOKEN_SYMBOL}
+            </span>
           </div>
         </div>
 

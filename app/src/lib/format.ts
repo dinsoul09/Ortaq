@@ -1,20 +1,40 @@
-/** Всё считается в SOL. Минимальная единица — лампорт, 9 знаков. */
-export const DECIMALS = 9
+/**
+ * Деньги считаются целыми числами в базовых единицах токена — 6 знаков,
+ * как договорились с Алексеем. 10.50 в интерфейсе = 10500000 в программе.
+ *
+ * Float в денежной арифметике не используется нигде: ввод разбирается
+ * построчно, вывод собирается из целых. Иначе 0.1 + 0.2 разъедется
+ * между экраном и цепочкой.
+ */
+export const DECIMALS = 6
 const UNIT = 10 ** DECIMALS
 
-/** SOL -> лампорты. Все суммы внутри приложения хранятся в лампортах. */
-export function toUnits(sol: number): number {
-  return Math.round(sol * UNIT)
+/**
+ * Символ токена сбора. Один на всё приложение: сменить единицу — одна строка
+ * здесь или переменная в .env, а не поиск по экранам.
+ */
+export const TOKEN_SYMBOL = import.meta.env.VITE_TOKEN_SYMBOL || 'SOL'
+
+/**
+ * Человеческая сумма -> базовые единицы. Принимает строку из поля ввода
+ * и разбирает её посимвольно, без умножения на float.
+ */
+export function toUnits(value: string | number): number {
+  const [whole = '', frac = ''] = String(value).trim().split('.')
+  const w = Number(whole.replace(/\D/g, '') || '0')
+  const f = Number((frac.replace(/\D/g, '') + '0'.repeat(DECIMALS)).slice(0, DECIMALS) || '0')
+  return w * UNIT + f
 }
 
 /**
- * Лампорты -> человеческий SOL: «2», «1.4», «0.000005».
- * Точка, а не запятая — так пишут суммы в SOL везде.
- * Девять знаков, потому что комиссия сети — 0.000005 SOL: округление
- * до четырёх превращало её в ноль. Хвостовые нули срезает Number().
+ * Базовые единицы -> человеческая строка: «2», «1.4», «10.5».
+ * Собирается из целых, хвостовые нули срезаются.
  */
 export function formatAmount(units: number): string {
-  return String(Number((units / UNIT).toFixed(DECIMALS)))
+  const n = Math.abs(Math.round(units))
+  const whole = Math.floor(n / UNIT)
+  const frac = String(n % UNIT).padStart(DECIMALS, '0').replace(/0+$/, '')
+  return (units < 0 ? '-' : '') + whole + (frac ? '.' + frac : '')
 }
 
 const now = () => Math.floor(Date.now() / 1000)

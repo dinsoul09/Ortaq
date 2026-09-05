@@ -1,5 +1,4 @@
 import {
-  NETWORK_FEE,
   OrtaqError,
   type Contribution,
   type CreatePoolParams,
@@ -12,7 +11,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 const now = () => Math.floor(Date.now() / 1000)
 const days = (n: number) => n * 86_400
 const hours = (n: number) => n * 3_600
-const sol = (n: number) => Math.round(n * 1e9) // SOL -> лампорты
+const units = (n: number) => Math.round(n * 1e6) // человеческая сумма -> базовые единицы
 
 interface Row {
   pool: Pool
@@ -28,12 +27,15 @@ const db = new Map<string, Row>()
  */
 const ME = 'me'
 
+/** Тестовый mint — на демо у всех сборов один токен. */
+const TOKEN = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'
+
 /**
- * Баланс демо-кошелька в лампортах. Живёт рядом со сборами намеренно:
+ * Баланс демо-кошелька в базовых единицах токена. Живёт рядом со сборами намеренно:
  * взнос обязан уменьшать его в тот же момент, иначе на экране два
  * несвязанных мира. В цепочке это будет настоящий баланс SOL.
  */
-let balance = sol(4)
+let balance = units(4)
 
 /** Сколько этот кошелёк внёс в каждый сбор — столько и вернётся, если сбор сорвётся. */
 const spent = new Map<string, number>()
@@ -51,8 +53,9 @@ function seed() {
       icon: 'home',
       organizer: 'Вы',
       recipient: 'Айгерим',
-      goal: sol(2),
-      collected: sol(1.4),
+      token: TOKEN,
+      goal: units(2),
+      collected: units(1.4),
       deadline: t + days(9),
       status: 'open',
     },
@@ -72,8 +75,9 @@ function seed() {
       icon: 'gift',
       organizer: 'Ира Л.',
       recipient: 'Макс',
-      goal: sol(1),
-      collected: sol(1),
+      token: TOKEN,
+      goal: units(1),
+      collected: units(1),
       deadline: t + days(3),
       status: 'released',
     },
@@ -93,8 +97,9 @@ function seed() {
       icon: 'mountain',
       organizer: 'Саша М.',
       recipient: 'Саша М.',
-      goal: sol(5),
-      collected: sol(1),
+      token: TOKEN,
+      goal: units(5),
+      collected: units(1),
       deadline: t + days(26),
       status: 'open',
     },
@@ -112,8 +117,9 @@ function seed() {
       icon: 'plane',
       organizer: 'Рома Б.',
       recipient: 'Рома Б.',
-      goal: sol(12),
-      collected: sol(1.8),
+      token: TOKEN,
+      goal: units(12),
+      collected: units(1.8),
       deadline: t - days(16),
       status: 'refunded',
     },
@@ -131,7 +137,7 @@ function add(pool: Pool, people: [string, number, number][], refunded = false) {
     contributions: people.map(([name, amount, at], i) => ({
       contributor: pool.address + '-' + i,
       name,
-      amount: sol(amount),
+      amount: units(amount),
       refunded,
       at,
     })),
@@ -178,6 +184,7 @@ export const mockClient: OrtaqClient = {
         icon: p.icon,
         organizer: 'Вы',
         recipient: p.recipient,
+        token: TOKEN,
         goal: p.goal,
         collected: 0,
         deadline: now() + p.durationSec,
@@ -217,9 +224,9 @@ export const mockClient: OrtaqClient = {
       row.contributions.push({ contributor: ME, name, amount, refunded: false, at: now() })
     }
     row.pool.collected += amount
-    // Комиссия уходит сети и не возвращается при срыве сбора — поэтому
-    // с баланса списывается вместе со взносом, а в spent не попадает.
-    balance -= amount + NETWORK_FEE
+    // Комиссия сети платится в SOL, а не в токене сбора — с этого баланса
+    // она не списывается, единицы разные.
+    balance -= amount
     spent.set(address, (spent.get(address) ?? 0) + amount)
   },
 

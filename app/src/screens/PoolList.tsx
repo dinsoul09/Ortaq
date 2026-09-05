@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Contribution, Pool } from '../lib/ortaq'
-import { formatAmount } from '../lib/format'
+import { formatAmount, TOKEN_SYMBOL } from '../lib/format'
 import { readWallet, shortAddress, type WalletState } from '../lib/wallet'
 import { PoolCard } from '../components/PoolCard'
 import { initials } from '../components/Avatar'
@@ -92,7 +92,7 @@ export function PoolList({
             <span className="text-[28px] leading-none font-bold tabular-nums">
               {balance === null ? '—' : formatAmount(balance)}
             </span>
-            <span className="ml-1.5 text-[18px] font-bold text-violet-soft">SOL</span>
+            <span className="ml-1.5 text-[18px] font-bold text-violet-soft">{TOKEN_SYMBOL}</span>
           </p>
           <p className="mt-1.5 text-[12px] text-white/35">
             {wallet ? `сеть ${wallet.cluster}` : 'сеть недоступна'}

@@ -1,4 +1,4 @@
-import { formatAgo, formatAmount } from '../lib/format'
+import { formatAgo, formatAmount, TOKEN_SYMBOL } from '../lib/format'
 import type { Contribution, Pool } from '../lib/ortaq'
 import { CheckIcon, CrossIcon } from '../components/Icons'
 import { Back, Screen, Title, TopGlow } from '../components/ui'
@@ -17,7 +17,7 @@ export function notificationsFor(pools: Pool[], people: Record<string, Contribut
       detail:
         p.status === 'released'
           ? `«${p.title}» успешно завершён. Все деньги переведены получателю.`
-          : `«${p.title}» закрыт. ${formatAmount(p.collected)} SOL вернулись на кошельки участников.`,
+          : `«${p.title}» закрыт. ${formatAmount(p.collected)} ${TOKEN_SYMBOL} вернулись на кошельки участников.`,
       // Времени закрытия в модели нет. Для сорванного сбора это срок,
       // для успешного — последний взнос: именно он закрыл цель.
       at:

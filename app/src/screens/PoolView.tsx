@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ortaq, OrtaqError, type Contribution, type Pool } from '../lib/ortaq'
-import { formatAmount, formatAgo, formatDate, formatLeft, percent } from '../lib/format'
+import { formatAmount, formatAgo, formatDate, formatLeft, percent, TOKEN_SYMBOL } from '../lib/format'
 import { Avatar } from '../components/Avatar'
 import { PoolGlyph, CheckIcon, CopyIcon, CrossIcon } from '../components/Icons'
 import { Progress } from '../components/Progress'
@@ -104,7 +104,6 @@ export function PoolView({
 
   const open = pool.status === 'open'
   const left = Math.max(0, pool.goal - pool.collected)
-  const isOrganizer = pool.organizer === me || pool.organizer === 'Вы'
 
   return (
     <>
@@ -135,9 +134,9 @@ export function PoolView({
                 <span className="text-[30px] leading-none font-extrabold tabular-nums">
                   {formatAmount(pool.collected)}
                 </span>
-                <span className="ml-1.5 text-[18px] font-bold text-violet-soft">SOL</span>
+                <span className="ml-1.5 text-[18px] font-bold text-violet-soft">{TOKEN_SYMBOL}</span>
               </p>
-              <p className="mt-1.5 text-[12px] text-white/35">/ {formatAmount(pool.goal)} SOL</p>
+              <p className="mt-1.5 text-[12px] text-white/35">/ {formatAmount(pool.goal)} {TOKEN_SYMBOL}</p>
             </div>
             <div className="text-right">
               <p className="text-[24px] leading-none font-bold text-violet-soft">
@@ -163,7 +162,7 @@ export function PoolView({
             <div className="mt-4 rounded-2xl border border-violet/20 bg-violet/10 p-3 text-center">
               <span className="text-[12px] text-white/50">Не хватает: </span>
               <span className="text-[12px] font-semibold text-violet-soft">
-                {formatAmount(left)} SOL
+                {formatAmount(left)} {TOKEN_SYMBOL}
               </span>
             </div>
           )}
@@ -180,7 +179,7 @@ export function PoolView({
           <Banner
             ok={false}
             title="Сбор не состоялся"
-            detail={`${formatAmount(pool.collected)} SOL вернулись на кошельки участников.`}
+            detail={`${formatAmount(pool.collected)} ${TOKEN_SYMBOL} вернулись на кошельки участников.`}
           />
         )}
 
@@ -200,7 +199,7 @@ export function PoolView({
                   <p className="text-[12px] text-white/35">{formatAgo(c.at)}</p>
                 </div>
                 <p className={`text-[14px] font-semibold ${c.refunded ? 'text-white/30 line-through' : 'text-violet-soft'}`}>
-                  +{formatAmount(c.amount)} SOL
+                  +{formatAmount(c.amount)} {TOKEN_SYMBOL}
                 </p>
               </div>
             ))}
@@ -215,14 +214,12 @@ export function PoolView({
             {copied ? 'Ссылка скопирована' : 'Скопировать ссылку'}
           </GhostButton>
 
-          {/* Этой кнопки в макете нет — но без неё нечем показать ключевой кадр демо:
-              организатор жмёт «Забрать деньги» до цели и получает крупный отказ.
-              Видна только организатору и всегда активна: заблокированную кнопку зал не заметит. */}
-          {isOrganizer && (
-            <GhostButton disabled={busy} onClick={release}>
-              Забрать деньги
-            </GhostButton>
-          )}
+          {/* Видна ВСЕГДА и всегда активна — это главный кадр демо: жмёшь до
+              достижения цели и получаешь крупный отказ. Ни прятать, ни
+              блокировать нельзя, заблокированную кнопку зал не заметит. */}
+          <GhostButton disabled={busy} onClick={release}>
+            Забрать деньги
+          </GhostButton>
 
           {/* Закрытый сбор уже ничего не держит — его можно убрать из списка. */}
           {!open && (

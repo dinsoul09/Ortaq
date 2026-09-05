@@ -1,10 +1,26 @@
 /**
- * Базовая комиссия Solana — 5000 лампортов. Платится сверх взноса и уходит
- * сети, а не в сбор. Живёт здесь, потому что это факт сети, а не оформление.
+ * Базовая комиссия Solana — 5000 лампортов. Это SOL, а НЕ токен сбора:
+ * складывать её с суммой взноса нельзя, единицы разные.
  */
-export const NETWORK_FEE = 5_000
+export const NETWORK_FEE_LAMPORTS = 5_000
 
 export type PoolStatus = 'open' | 'released' | 'refunded'
+
+/**
+ * Статус в программе — число: 0 активен, 1 выплачен, 2 возвращён.
+ * Мапу держим здесь, чтобы chain.ts переводил в одном месте.
+ */
+export const POOL_STATUS_BY_CODE: Record<number, PoolStatus> = {
+  0: 'open',
+  1: 'released',
+  2: 'refunded',
+}
+
+export const POOL_STATUS_CODE: Record<PoolStatus, number> = {
+  open: 0,
+  released: 1,
+  refunded: 2,
+}
 
 /**
  * Значок сбора. Словарь живёт здесь, а не в компонентах: это часть данных
@@ -22,7 +38,9 @@ export interface Pool {
   icon: PoolIcon
   organizer: string
   recipient: string
-  /** в минимальных единицах токена */
+  /** mint токена сбора */
+  token: string
+  /** в базовых единицах токена, целое */
   goal: number
   collected: number
   /** unix seconds */
