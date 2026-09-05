@@ -53,7 +53,7 @@ function seed() {
       icon: 'home',
       organizer: 'Вы',
       recipient: 'Айгерим',
-      token: TOKEN,
+      mint: TOKEN,
       goal: units(2),
       collected: units(1.4),
       deadline: t + days(9),
@@ -75,7 +75,7 @@ function seed() {
       icon: 'gift',
       organizer: 'Ира Л.',
       recipient: 'Макс',
-      token: TOKEN,
+      mint: TOKEN,
       goal: units(1),
       collected: units(1),
       deadline: t + days(3),
@@ -97,7 +97,7 @@ function seed() {
       icon: 'mountain',
       organizer: 'Саша М.',
       recipient: 'Саша М.',
-      token: TOKEN,
+      mint: TOKEN,
       goal: units(5),
       collected: units(1),
       deadline: t + days(26),
@@ -117,7 +117,7 @@ function seed() {
       icon: 'plane',
       organizer: 'Рома Б.',
       recipient: 'Рома Б.',
-      token: TOKEN,
+      mint: TOKEN,
       goal: units(12),
       collected: units(1.8),
       deadline: t - days(16),
@@ -184,7 +184,7 @@ export const mockClient: OrtaqClient = {
         icon: p.icon,
         organizer: 'Вы',
         recipient: p.recipient,
-        token: TOKEN,
+        mint: TOKEN,
         goal: p.goal,
         collected: 0,
         deadline: now() + p.durationSec,
@@ -248,12 +248,4 @@ export const mockClient: OrtaqClient = {
     close(row)
   },
 
-  async deletePool(address) {
-    await sleep(LATENCY)
-    const row = read(address)
-    // Пока сбор идёт, в нём лежат чужие деньги — удалять нечего и нельзя.
-    if (row.pool.status === 'open') throw new OrtaqError('PoolStillOpen', 'Сбор ещё идёт')
-    db.delete(address)
-    spent.delete(address)
-  },
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ortaq, type Contribution, type Pool } from './lib/ortaq'
 import { getName, setName } from './lib/wallet'
+import { adoptFromUrl } from './lib/poolMeta'
 import { WithPool } from './components/WithPool'
 import { Connect } from './screens/Connect'
 import { Name } from './screens/Name'
@@ -32,7 +33,7 @@ export default function App() {
   const [wallet, setWallet] = useState<string | null>(null)
   const [me, setMe] = useState<string>(getName)
   const [view, setView] = useState<View>(() => {
-    const deep = new URLSearchParams(location.search).get('pool')
+    const deep = adoptFromUrl()
     return deep ? { name: 'pool', address: deep } : { name: 'list' }
   })
 

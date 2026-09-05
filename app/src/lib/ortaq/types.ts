@@ -38,8 +38,8 @@ export interface Pool {
   icon: PoolIcon
   organizer: string
   recipient: string
-  /** mint токена сбора */
-  token: string
+  /** mint токена сбора — как в программе */
+  mint: string
   /** в базовых единицах токена, целое */
   goal: number
   collected: number
@@ -82,8 +82,6 @@ export interface OrtaqClient {
   /** бросает OrtaqError с кодом 'GoalNotReached', если цель не достигнута */
   release(address: string): Promise<void>
   refund(address: string): Promise<void>
-  /** Убрать закрытый сбор из списка. Открытый удалить нельзя. */
-  deletePool(address: string): Promise<void>
 }
 
 export type OrtaqErrorCode =
@@ -93,7 +91,6 @@ export type OrtaqErrorCode =
   | 'PoolClosed'
   | 'AlreadyRefunded'
   | 'NothingToRefund'
-  | 'PoolStillOpen'
 
 export class OrtaqError extends Error {
   constructor(public code: OrtaqErrorCode, message: string) {
@@ -111,5 +108,4 @@ export const ERROR_TEXT: Record<OrtaqErrorCode, string> = {
   PoolClosed: 'Сбор уже закрыт.',
   AlreadyRefunded: 'Взнос уже возвращён.',
   NothingToRefund: 'В этом сборе нет вашего взноса.',
-  PoolStillOpen: 'Сбор ещё идёт — удалить его нельзя.',
 }

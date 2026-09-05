@@ -10,7 +10,6 @@ const EYEBROW: Record<NoticeCode, string> = {
   PoolClosed: 'Сбор закрыт',
   AlreadyRefunded: 'Уже возвращено',
   NothingToRefund: 'Нечего возвращать',
-  PoolStillOpen: 'Сбор идёт',
   Unknown: 'Не получилось',
 }
 
@@ -23,7 +22,6 @@ const DETAIL: Record<NoticeCode, string> = {
   PoolClosed: 'Деньги уже ушли по правилу сбора — забрать их повторно нельзя.',
   AlreadyRefunded: 'Возврат уже прошёл, деньги у вас.',
   NothingToRefund: 'Возврат получают только те, кто вносил деньги в этот сбор.',
-  PoolStillOpen: 'Пока идёт срок, в сборе лежат деньги участников. Удалить его можно только после закрытия.',
   Unknown: 'Сеть не ответила. Состояние сбора не изменилось — попробуйте ещё раз.',
 }
 

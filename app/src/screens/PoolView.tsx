@@ -7,6 +7,7 @@ import { Progress } from '../components/Progress'
 import { StatusPill } from '../components/StatusPill'
 import { Notice, type NoticeCode } from '../components/Notice'
 import { Back, Card, GhostButton, PrimaryButton, Screen, TopGlow } from '../components/ui'
+import { poolLink } from '../lib/poolMeta'
 
 const POLL_MS = 2000
 
@@ -33,7 +34,6 @@ export function PoolView({
   const [rows, setRows] = useState<Contribution[]>([])
   const [notice, setNotice] = useState<NoticeCode | null>(null)
   const [copied, setCopied] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
@@ -64,27 +64,12 @@ export function PoolView({
     }
   }
 
-  /** Удаление в два касания: на сцене промах по кнопке стоит дорого. */
-  async function remove() {
-    if (!confirmDelete) {
-      setConfirmDelete(true)
-      setTimeout(() => setConfirmDelete(false), 4000)
-      return
-    }
-    setBusy(true)
-    try {
-      await ortaq.deletePool(address)
-      onBack()
-    } catch (e) {
-      setNotice(e instanceof OrtaqError ? e.code : 'Unknown')
-      setConfirmDelete(false)
-    } finally {
-      setBusy(false)
-    }
-  }
-
   async function copyLink() {
-    const link = `${location.origin}${location.pathname}?pool=${address}`
+    const link = poolLink(address, pool && {
+      title: pool.title,
+      description: pool.description,
+      icon: pool.icon,
+    })
     try {
       await navigator.clipboard.writeText(link)
       setCopied(true)
@@ -221,20 +206,6 @@ export function PoolView({
             Забрать деньги
           </GhostButton>
 
-          {/* Закрытый сбор уже ничего не держит — его можно убрать из списка. */}
-          {!open && (
-            <button
-              disabled={busy}
-              onClick={remove}
-              className={`w-full rounded-2xl border py-3.5 text-[15px] disabled:opacity-40 ${
-                confirmDelete
-                  ? 'border-rose-deep/50 bg-rose-deep/15 font-semibold text-rose'
-                  : 'border-white/10 bg-white/[0.06] text-rose/70'
-              }`}
-            >
-              {confirmDelete ? 'Точно удалить? Нажмите ещё раз' : 'Удалить сбор'}
-            </button>
-          )}
         </div>
 
         {notice && <Notice code={notice} onClose={() => setNotice(null)} />}

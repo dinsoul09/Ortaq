@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ortaq, usingMock, type PoolIcon } from '../lib/ortaq'
 import { toUnits, TOKEN_SYMBOL } from '../lib/format'
+import { poolLink, saveMeta } from '../lib/poolMeta'
 import { POOL_ICON_KEYS, PoolGlyph, CopyIcon } from '../components/Icons'
 import {
   Back,
@@ -58,10 +59,11 @@ export function CreatePool({
         durationSec: Math.max(30, seconds),
         recipient: 'Вы',
       })
+      const meta = { title: title.trim(), description: description.trim(), icon }
+      // Названия в программе нет — держим его у себя и кладём в ссылку.
+      saveMeta(address, meta)
       try {
-        await navigator.clipboard.writeText(
-          `${location.origin}${location.pathname}?pool=${address}`,
-        )
+        await navigator.clipboard.writeText(poolLink(address, meta))
       } catch {
         /* буфер недоступен — ссылка всё равно окажется в адресной строке */
       }

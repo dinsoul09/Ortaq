@@ -29,5 +29,4 @@ export const chainClient: OrtaqClient = {
   contribute: notReady,
   release: notReady,
   refund: notReady,
-  deletePool: notReady,
 }
