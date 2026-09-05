@@ -1,15 +1,21 @@
+# Общее
 node_modules
-dist
-.vite
-.env.local
+.DS_Store
 .env
+.env.local
 keys/
 *.keypair.json
-.DS_Store
 .trash-*
+
+# Фронт (app/)
+dist
+.vite
 *.tsbuildinfo
 
-# Anchor (program/)
-target/
-.anchor/
-test-ledger/
+# Anchor
+target
+.anchor
+test-ledger
+**/*.rs.bk
+.yarn
+.surfpool
