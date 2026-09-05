@@ -1,8 +1,25 @@
+/**
+ * Базовая комиссия Solana — 5000 лампортов. Платится сверх взноса и уходит
+ * сети, а не в сбор. Живёт здесь, потому что это факт сети, а не оформление.
+ */
+export const NETWORK_FEE = 5_000
+
 export type PoolStatus = 'open' | 'released' | 'refunded'
+
+/**
+ * Значок сбора. Словарь живёт здесь, а не в компонентах: это часть данных
+ * сбора, рисование — дело Icons.tsx.
+ */
+export type PoolIcon =
+  | 'home' | 'gift' | 'mountain' | 'plane' | 'target'
+  | 'game' | 'music' | 'food' | 'film' | 'bag'
 
 export interface Pool {
   address: string
   title: string
+  /** необязательное пояснение от организатора */
+  description: string
+  icon: PoolIcon
   organizer: string
   recipient: string
   /** в минимальных единицах токена */
@@ -18,10 +35,14 @@ export interface Contribution {
   name: string
   amount: number
   refunded: boolean
+  /** unix seconds, время взноса */
+  at: number
 }
 
 export interface CreatePoolParams {
   title: string
+  description: string
+  icon: PoolIcon
   goal: number
   durationSec: number
   recipient: string
@@ -32,13 +53,19 @@ export interface CreatePoolParams {
  * Компоненты работают только с этим интерфейсом.
  */
 export interface OrtaqClient {
+  /** Баланс участника в токене сбора, в минимальных единицах. */
+  getBalance(): Promise<number>
   createPool(params: CreatePoolParams): Promise<string>
+  /** сборы, доступные этому участнику — для главного экрана со списком */
+  listPools(): Promise<Pool[]>
   getPool(address: string): Promise<Pool>
   listContributions(address: string): Promise<Contribution[]>
   contribute(address: string, amount: number, name: string): Promise<void>
   /** бросает OrtaqError с кодом 'GoalNotReached', если цель не достигнута */
   release(address: string): Promise<void>
   refund(address: string): Promise<void>
+  /** Убрать закрытый сбор из списка. Открытый удалить нельзя. */
+  deletePool(address: string): Promise<void>
 }
 
 export type OrtaqErrorCode =
@@ -48,6 +75,7 @@ export type OrtaqErrorCode =
   | 'PoolClosed'
   | 'AlreadyRefunded'
   | 'NothingToRefund'
+  | 'PoolStillOpen'
 
 export class OrtaqError extends Error {
   constructor(public code: OrtaqErrorCode, message: string) {
@@ -65,4 +93,5 @@ export const ERROR_TEXT: Record<OrtaqErrorCode, string> = {
   PoolClosed: 'Сбор уже закрыт.',
   AlreadyRefunded: 'Взнос уже возвращён.',
   NothingToRefund: 'В этом сборе нет вашего взноса.',
+  PoolStillOpen: 'Сбор ещё идёт — удалить его нельзя.',
 }

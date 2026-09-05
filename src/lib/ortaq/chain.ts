@@ -21,10 +21,13 @@ const notReady = (): never => {
 }
 
 export const chainClient: OrtaqClient = {
+  getBalance: notReady,
   createPool: notReady,
+  listPools: notReady,
   getPool: notReady,
   listContributions: notReady,
   contribute: notReady,
   release: notReady,
   refund: notReady,
+  deletePool: notReady,
 }

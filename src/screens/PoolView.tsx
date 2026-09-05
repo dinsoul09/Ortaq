@@ -1,27 +1,39 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ortaq, OrtaqError, ERROR_TEXT, type Contribution, type Pool } from '../lib/ortaq'
-import { formatAmount, toUnits } from '../lib/format'
+import { ortaq, OrtaqError, type Contribution, type Pool } from '../lib/ortaq'
+import { formatAmount, formatAgo, formatDate, formatLeft, percent } from '../lib/format'
+import { Avatar } from '../components/Avatar'
+import { PoolGlyph, CheckIcon, CopyIcon, CrossIcon } from '../components/Icons'
 import { Progress } from '../components/Progress'
-import { Countdown } from '../components/Countdown'
-import { ContributorRow } from '../components/ContributorRow'
-import { Notice } from '../components/Notice'
-import type { Identity } from '../lib/wallet'
+import { StatusPill } from '../components/StatusPill'
+import { Notice, type NoticeCode } from '../components/Notice'
+import { Back, Card, GhostButton, PrimaryButton, Screen, TopGlow } from '../components/ui'
 
 const POLL_MS = 2000
-const STEP = 5000 // взнос по умолчанию, в тенге
 
 /**
- * ГЛАВНЫЙ ЭКРАН. Это и есть выступление.
+ * ГЛАВНЫЙ ЭКРАН СБОРА. Это и есть выступление.
  *
  * Три кадра, ради которых он существует:
  *  1. взнос с одного телефона виден на двух других за ~2 секунды
  *  2. организатор жмёт «Забрать деньги» до цели -> крупный отказ
  *  3. срок вышел без цели -> деньги вернулись сами
  */
-export function PoolView({ address, me }: { address: string; me: Identity }) {
+export function PoolView({
+  address,
+  me,
+  onBack,
+  onContribute,
+}: {
+  address: string
+  me: string
+  onBack: () => void
+  onContribute: () => void
+}) {
   const [pool, setPool] = useState<Pool | null>(null)
   const [rows, setRows] = useState<Contribution[]>([])
-  const [notice, setNotice] = useState<string | null>(null)
+  const [notice, setNotice] = useState<NoticeCode | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
@@ -40,86 +52,218 @@ export function PoolView({ address, me }: { address: string; me: Identity }) {
     return () => clearInterval(id)
   }, [load])
 
-  async function run(fn: () => Promise<void>) {
+  async function release() {
     setBusy(true)
     try {
-      await fn()
+      await ortaq.release(address)
       await load()
     } catch (e) {
-      if (e instanceof OrtaqError) setNotice(ERROR_TEXT[e.code])
-      else setNotice('Что-то пошло не так. Попробуйте ещё раз.')
+      setNotice(e instanceof OrtaqError ? e.code : 'Unknown')
     } finally {
       setBusy(false)
     }
   }
 
-  if (!pool) return <div className="p-6 text-mute">Загрузка…</div>
+  /** Удаление в два касания: на сцене промах по кнопке стоит дорого. */
+  async function remove() {
+    if (!confirmDelete) {
+      setConfirmDelete(true)
+      setTimeout(() => setConfirmDelete(false), 4000)
+      return
+    }
+    setBusy(true)
+    try {
+      await ortaq.deletePool(address)
+      onBack()
+    } catch (e) {
+      setNotice(e instanceof OrtaqError ? e.code : 'Unknown')
+      setConfirmDelete(false)
+    } finally {
+      setBusy(false)
+    }
+  }
 
-  const isOrganizer = pool.organizer === me.name || pool.organizer === 'Вы'
-  const done = pool.status !== 'open'
+  async function copyLink() {
+    const link = `${location.origin}${location.pathname}?pool=${address}`
+    try {
+      await navigator.clipboard.writeText(link)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      /* буфер недоступен — ссылка всё равно в адресной строке */
+    }
+  }
+
+  if (!pool)
+    return (
+      <Screen>
+        <Back onClick={onBack} />
+        <p className="text-white/40">Загрузка…</p>
+      </Screen>
+    )
+
+  const open = pool.status === 'open'
+  const left = Math.max(0, pool.goal - pool.collected)
+  const isOrganizer = pool.organizer === me || pool.organizer === 'Вы'
 
   return (
-    <div className="mx-auto flex min-h-full max-w-md flex-col gap-6 p-5 pb-10">
-      <header>
-        <p className="text-sm text-mute">Общий сбор</p>
-        <h1 className="mt-1 text-2xl leading-tight font-bold">{pool.title}</h1>
-      </header>
+    <>
+      <TopGlow />
+      <Screen>
+        <Back onClick={onBack} />
 
-      <section className="rounded-2xl border border-line bg-card p-5">
-        <div className="mb-3 flex items-end justify-between">
-          <div>
-            <span className="text-3xl font-bold tabular-nums">{formatAmount(pool.collected)}</span>
-            <span className="text-mute"> из {formatAmount(pool.goal)} ₸</span>
+        <div className="flex items-start gap-3.5">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-violet/15 text-violet-soft">
+            <PoolGlyph name={pool.icon} className="h-7 w-7" />
           </div>
-          <span className="text-sm text-mute">
-            {pool.status === 'open' ? <Countdown deadline={pool.deadline} /> : null}
-          </span>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h2 className="text-[20px] leading-tight font-bold">{pool.title}</h2>
+            <div className="mt-1.5">
+              <StatusPill status={pool.status} />
+            </div>
+          </div>
         </div>
 
-        <Progress collected={pool.collected} goal={pool.goal} />
+        {pool.description && (
+          <p className="mt-4 text-[14px] leading-normal text-white/50">{pool.description}</p>
+        )}
+
+        <Card className="mt-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p>
+                <span className="text-[30px] leading-none font-extrabold tabular-nums">
+                  {formatAmount(pool.collected)}
+                </span>
+                <span className="ml-1.5 text-[18px] font-bold text-violet-soft">SOL</span>
+              </p>
+              <p className="mt-1.5 text-[12px] text-white/35">/ {formatAmount(pool.goal)} SOL</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[24px] leading-none font-bold text-violet-soft">
+                {percent(pool.collected, pool.goal)}%
+              </p>
+              <p className="mt-1.5 text-[12px] text-white/35">собрано</p>
+            </div>
+          </div>
+
+          <Progress
+            collected={pool.collected}
+            goal={pool.goal}
+            status={pool.status}
+            className="mt-4"
+          />
+
+          <div className="mt-3 flex items-center justify-between text-[12px]">
+            <span className="text-white/40">Срок: {formatDate(pool.deadline)}</span>
+            {open && <span className="font-semibold text-amber">{formatLeft(pool.deadline)}</span>}
+          </div>
+
+          {open && left > 0 && (
+            <div className="mt-4 rounded-2xl border border-violet/20 bg-violet/10 p-3 text-center">
+              <span className="text-[12px] text-white/50">Не хватает: </span>
+              <span className="text-[12px] font-semibold text-violet-soft">
+                {formatAmount(left)} SOL
+              </span>
+            </div>
+          )}
+        </Card>
 
         {pool.status === 'released' && (
-          <p className="mt-4 text-brand">Собрали. Деньги у получателя — {pool.recipient}.</p>
+          <Banner
+            ok
+            title="Сбор успешно завершён!"
+            detail={`Все деньги переведены получателю — ${pool.recipient}.`}
+          />
         )}
         {pool.status === 'refunded' && (
-          <p className="mt-4 text-alarm">Не собрали в срок. Взносы вернулись участникам.</p>
+          <Banner
+            ok={false}
+            title="Сбор не состоялся"
+            detail={`${formatAmount(pool.collected)} SOL вернулись на кошельки участников.`}
+          />
         )}
-      </section>
 
-      <section className="rounded-2xl border border-line bg-card px-5 py-2">
-        <p className="border-b border-line py-3 text-sm text-mute">
-          Сдали {rows.length} {rows.length === 1 ? 'человек' : 'человека'}
-        </p>
-        {rows.length === 0 ? (
-          <p className="py-4 text-mute">Пока никто не сдал</p>
-        ) : (
-          rows.map((c) => <ContributorRow key={c.contributor} c={c} />)
-        )}
-      </section>
+        <Card className="mt-3">
+          <p className="text-[12px] tracking-[0.6px] text-white/40">
+            Участники · {rows.length}
+          </p>
+          <div className="mt-4 flex flex-col gap-3.5">
+            {rows.length === 0 && <p className="text-[14px] text-white/30">Пока никто не сдал</p>}
+            {rows.map((c) => (
+              <div key={c.contributor} className="flex items-center gap-3">
+                <Avatar name={c.name} dimmed={c.refunded} />
+                <div className="min-w-0 flex-1">
+                  <p className={`text-[14px] font-medium ${c.refunded ? 'text-white/40 line-through' : ''}`}>
+                    {c.name}
+                  </p>
+                  <p className="text-[12px] text-white/35">{formatAgo(c.at)}</p>
+                </div>
+                <p className={`text-[14px] font-semibold ${c.refunded ? 'text-white/30 line-through' : 'text-violet-soft'}`}>
+                  +{formatAmount(c.amount)} SOL
+                </p>
+              </div>
+            ))}
+          </div>
+        </Card>
 
-      <div className="mt-auto flex flex-col gap-3">
-        <button
-          disabled={busy || done}
-          onClick={() => run(() => ortaq.contribute(address, toUnits(STEP), me.name))}
-          className="w-full rounded-xl bg-brand py-4 text-lg font-semibold text-ink disabled:opacity-40"
-        >
-          Внести {formatAmount(toUnits(STEP))} ₸
-        </button>
+        <div className="mt-5 flex flex-col gap-2.5">
+          {open && <PrimaryButton onClick={onContribute}>Внести деньги</PrimaryButton>}
 
-        {/* Кнопка организатора видна и активна ВСЕГДА.
-            Заблокированную кнопку зал не заметит — а отказ заметит. */}
-        {isOrganizer && !done && (
-          <button
-            disabled={busy}
-            onClick={() => run(() => ortaq.release(address))}
-            className="w-full rounded-xl border border-line py-4 text-lg text-mute disabled:opacity-40"
-          >
-            Забрать деньги
-          </button>
-        )}
+          <GhostButton onClick={copyLink}>
+            <CopyIcon className="h-4 w-4" />
+            {copied ? 'Ссылка скопирована' : 'Скопировать ссылку'}
+          </GhostButton>
+
+          {/* Этой кнопки в макете нет — но без неё нечем показать ключевой кадр демо:
+              организатор жмёт «Забрать деньги» до цели и получает крупный отказ.
+              Видна только организатору и всегда активна: заблокированную кнопку зал не заметит. */}
+          {isOrganizer && (
+            <GhostButton disabled={busy} onClick={release}>
+              Забрать деньги
+            </GhostButton>
+          )}
+
+          {/* Закрытый сбор уже ничего не держит — его можно убрать из списка. */}
+          {!open && (
+            <button
+              disabled={busy}
+              onClick={remove}
+              className={`w-full rounded-2xl border py-3.5 text-[15px] disabled:opacity-40 ${
+                confirmDelete
+                  ? 'border-rose-deep/50 bg-rose-deep/15 font-semibold text-rose'
+                  : 'border-white/10 bg-white/[0.06] text-rose/70'
+              }`}
+            >
+              {confirmDelete ? 'Точно удалить? Нажмите ещё раз' : 'Удалить сбор'}
+            </button>
+          )}
+        </div>
+
+        {notice && <Notice code={notice} onClose={() => setNotice(null)} />}
+      </Screen>
+    </>
+  )
+}
+
+function Banner({ ok, title, detail }: { ok: boolean; title: string; detail: string }) {
+  return (
+    <div
+      className={`mt-3 flex items-start gap-3 rounded-2xl border p-4 ${
+        ok ? 'border-mint-deep/25 bg-mint-deep/10' : 'border-rose-deep/25 bg-rose-deep/10'
+      }`}
+    >
+      <div
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+          ok ? 'bg-mint-deep/20 text-mint' : 'bg-rose-deep/20 text-rose'
+        }`}
+      >
+        {ok ? <CheckIcon className="h-4 w-4" /> : <CrossIcon className="h-4 w-4" />}
       </div>
-
-      {notice && <Notice text={notice} onClose={() => setNotice(null)} />}
+      <div>
+        <p className={`text-[14px] font-semibold ${ok ? 'text-mint' : 'text-rose'}`}>{title}</p>
+        <p className="mt-0.5 text-[12px] text-white/45">{detail}</p>
+      </div>
     </div>
   )
 }

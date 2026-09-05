@@ -1,19 +1,35 @@
 @import "tailwindcss";
 
+/* Токены сняты с макета Figma Make «Дизайн приложения для сборов».
+   Фиолетовая тема, 390×844. Менять только вместе с макетом. */
 @theme {
-  --color-ink: #0f1115;
-  --color-card: #171a21;
-  --color-line: #262a34;
-  --color-mute: #8d94a5;
-  --color-brand: #4ade80;
-  --color-alarm: #f87171;
+  --color-void: #060510;         /* фон за телефоном */
+  --color-ink: #0a0a0f;          /* фон приложения */
+  --color-card: #13121e;         /* карточка */
+
+  --color-violet: #8e51ff;       /* основной акцент */
+  --color-violet-deep: #7f22fe;  /* залитые чипы, аватары */
+  --color-violet-soft: #c4b4ff;  /* суммы и акцентный текст */
+
+  --color-mint: #00d492;         /* успех */
+  --color-mint-deep: #00bc7d;
+  --color-rose: #ff6467;         /* отказ, срыв срока */
+  --color-rose-deep: #fb2c36;
+  --color-amber: #ffb900;        /* остаток срока */
 }
 
 html, body, #root { height: 100%; }
 body {
   background: var(--color-ink);
-  color: #eef1f6;
+  color: #fff;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
+
+/* Градиенты повторяются на всех экранах — держим их именами, а не копипастой. */
+.grad-brand { background-image: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+.grad-brand-deep { background-image: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 60%, #4c1d95 100%); }
+.grad-violet { background-image: linear-gradient(to right, #8e51ff 0%, #c27aff 100%); }
+.grad-mint { background-image: linear-gradient(to right, #00d492 0%, #00bc7d 100%); }
+.grad-rose { background-image: linear-gradient(to right, rgba(255,100,103,.6) 0%, rgba(251,44,54,.6) 100%); }
