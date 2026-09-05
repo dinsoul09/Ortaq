@@ -7,3 +7,8 @@ keys/
 .DS_Store
 .trash-*
 *.tsbuildinfo
+
+# Anchor (program/)
+target/
+.anchor/
+test-ledger/
