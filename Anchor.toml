@@ -10,7 +10,7 @@ skip-lint = false
 pool_tmp = "AaJbysPdFFNc5anUvuMycEXvbyki7HUaUAMtZVPmUXgt"
 
 [provider]
-cluster = "https://devnet.helius-rpc.com/?api-key=f2ad3123-e8a9-44b7-a393-6c53cede5e6d"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
