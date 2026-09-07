@@ -136,7 +136,7 @@ Program ID (devnet): `AaJbysPdFFNc5anUvuMycEXvbyki7HUaUAMtZVPmUXgt`
 
 - Карим Абрахманов 
 - Алексей Грызлов
-- 
+  
 
 ## Лицензия
 
