@@ -134,8 +134,9 @@ Program ID (devnet): `AaJbysPdFFNc5anUvuMycEXvbyki7HUaUAMtZVPmUXgt`
 
 ## Команда
 
-- Карим Абрахманов — клиент
-- Алексей Грызлов — Anchor-программа
+- Карим Абрахманов 
+- Алексей Грызлов
+- 
 
 ## Лицензия
 
